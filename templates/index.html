@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html class="bg-gray-50">
+  <head>
+    <title>ColorWise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col items-center pt-16">
+    <div class="bg-white p-10 rounded-3xl shadow-xl max-w-2xl w-full">
+      <h1
+        class="text-4xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500"
+      >
+        🌈 ColorWise
+      </h1>
+      <p class="text-gray-600 text-center mt-2">
+        Turn any image into a stunning color palette.
+      </p>
+
+      <form id="uploadForm" class="mt-8" enctype="multipart/form-data">
+        <input
+          type="file"
+          name="file"
+          accept="image/*"
+          class="block mx-auto file:py-2 file:px-4 file:rounded-lg file:border-none file:bg-purple-50 file:text-purple-700"
+          required
+        />
+
+        <button
+          type="submit"
+          class="mt-6 w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-600 transition"
+        >
+          Generate Palette 🎨
+        </button>
+      </form>
+
+      <div id="result" class="hidden mt-8">
+        <img id="preview" class="max-h-60 mx-auto rounded-lg shadow" />
+        <div
+          id="colors-container"
+          class="mt-6 flex justify-center gap-4 flex-wrap"
+        ></div>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById("uploadForm").onsubmit = async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const fd = new FormData(form);
+
+        const res = await fetch("/extract", { method: "POST", body: fd });
+        const data = await res.json();
+
+        if (data.error) {
+          alert("Error: " + data.error);
+          return;
+        }
+
+        document.getElementById("preview").src = data.image_url;
+        const colorsEl = document.getElementById("colors-container");
+        colorsEl.innerHTML = "";
+
+        data.colors.forEach((color) => {
+          const colEl = document.createElement("div");
+          colEl.className = "text-center";
+
+          colEl.innerHTML = `
+          <div class="w-16 h-16 rounded-lg shadow" style="background-color:${color.hex}"></div>
+          <p class="font-mono text-sm mt-1">${color.hex}</p>
+        `;
+          colEl.onclick = () => {
+            navigator.clipboard.writeText(color.hex);
+            alert(`Copied ${color.hex}!`);
+          };
+          colorsEl.appendChild(colEl);
+        });
+
+        document.getElementById("result").classList.remove("hidden");
+      };
+    </script>
+  </body>
+</html>
